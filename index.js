@@ -1,5 +1,6 @@
 class LiteCSP {
-  constructor () {
+  constructor (type) {
+    this.type = type
     this.generator = null
     this.observer = null // a observer Function
     this.running = false
@@ -37,7 +38,11 @@ class LiteCSP {
   }
 
   input (key, data) {
-    if (this.running && this.expect[ key ]) this.next(data)
+    if (this.running && this.expect[ key ]) {
+      this.next(data)
+      return true
+    }
+    return false
   }
 }
 
@@ -59,7 +64,7 @@ const serviceInstance = new class {
 
   setService (type, serviceGeneratorFunction) {
     if (this.serviceMap[ type ]) console.warn('[ReduxService] possible unpurposed service overwrite:', type, serviceGeneratorFunction)
-    const service = new LiteCSP()
+    const service = new LiteCSP(type)
     service.linkGenerator(serviceGeneratorFunction, { store: this.store })
     service.linkObserver(this.store.dispatch)
     service.start()
@@ -70,10 +75,11 @@ const serviceInstance = new class {
     if (!this.store) console.warn('[ReduxService] action before store:', action)
     const entry = this.entryMap[ action.type ]
     if (entry) return entry(this.store, action) || false // if the entry return true, follow up middleware & reducers will be blocked
-    const service = this.serviceMap[ action.type ]
-    if (service) {
-      service.next(action)
-      if (!service.running) delete this.serviceMap[ type ]
+    for (const service of this.serviceMap) {
+      if (service.input(action.type, action)) {
+        (!service.running) && delete this.serviceMap[ service.type ]
+        return true
+      }
     }
     return false // if the entry return true, follow up middleware & reducers will be blocked
   }
