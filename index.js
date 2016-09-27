@@ -40,7 +40,7 @@ class LiteCSP {
   }
 
   linkGenerator (generatorFunction, contextObject) {
-    this.generator = generatorFunction(Object.assign({}, this.contextObject, contextObject))
+    this.generator = generatorFunction({ ...this.contextObject, ...contextObject })
     this.generatorNext = (data) => {
       this.respond = DEFAULT_RESPOND
       if (this.running) this.running = (this.generator.next(data).done === false)
@@ -161,7 +161,7 @@ class ReduxService {
     const service = new LiteCSP(type)
     service.linkGenerator(serviceGeneratorFunction, { store: this.store })
     service.linkObserver((...args) => {
-      console.log('observer', ...args)
+      // console.log('observer', ...args)
       return this.store.dispatch(...args)
     })
     service.start()
@@ -178,7 +178,7 @@ class ReduxService {
 
     const entry = this.entryMap[ action.type ]
     if (entry) {
-      console.log('[ReduxService] Entry:', action.type)
+      // console.log('[ReduxService] Entry:', action.type)
       const isBlock = entry(this.store, action)
       if (isBlock) return true // if the entry return true, follow up middleware & reducers will be blocked
     }
@@ -186,7 +186,7 @@ class ReduxService {
     for (const type in this.serviceMap) {
       const service = this.serviceMap[ type ]
       if (service.input(action.type, action)) {
-        if (!service.running) console.log('[ReduxService] service stopped:', service.type)
+        // if (!service.running) console.log('[ReduxService] service stopped:', service.type)
         if (!service.running) delete this.serviceMap[ service.type ]
         return true // always block
       }
@@ -208,9 +208,9 @@ const factory = () => ({
     return (next) => action => Instance.onAction(action) || next(action) // pick this action from the reducer
   },
   createSessionReducer: (actionType, session) => {
-    const initialState = Object.assign({ _tick: 0 }, session)
+    const initialState = { ...session, _tick: 0 }
     return (state = initialState, action) => {
-      if (action.type === actionType) return Object.assign({ _tick: state._tick + 1 }, state, action.payload)
+      if (action.type === actionType) return { ...state, ...action.payload, _tick: state._tick + 1 }
       else return state
     }
   }
