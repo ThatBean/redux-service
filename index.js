@@ -99,6 +99,13 @@ class ReduxService {
     this.entryMap = {} // actionType - serviceEntryFunction
     this.serviceMap = {} // serviceType - LiteCSP
     this.serviceGeneratorFunctionMap = {}
+    this.bindMap = {
+      setEntry: this.setEntry.bind(this),
+      setService: this.setService.bind(this),
+      startService: this.startService.bind(this),
+      startAllService: this.startAllService.bind(this),
+      stopService: this.stopService.bind(this)
+    }
   }
 
   setStore (store) { this.store = store }
@@ -118,7 +125,10 @@ class ReduxService {
     if (!serviceGeneratorFunction) return console.warn('[ReduxService] service not found:', type)
     if (this.serviceMap[ type ]) return console.warn('[ReduxService] service already started:', type)
     const service = new LiteCSP(type)
-    service.linkGenerator(serviceGeneratorFunction, { store: this.store })
+    service.linkGenerator(serviceGeneratorFunction, {
+      store: this.store,
+      ...this.bindMap
+    })
     service.linkObserver((...args) => {
       // console.log('observer', ...args)
       return this.store.dispatch(...args)
@@ -130,6 +140,13 @@ class ReduxService {
 
   startAllService () {
     for (const type in this.serviceGeneratorFunctionMap) !this.serviceMap[ type ] && this.startService(type)
+  }
+
+  stopService (type) {
+    const service = this.serviceMap[ type ]
+    if (!service) return
+    service.stop()
+    delete this.serviceMap[ service.type ]
   }
 
   onAction (action) {
@@ -158,10 +175,7 @@ class ReduxService {
 const Instance = new ReduxService()
 
 const factory = () => ({
-  setEntry: Instance.setEntry.bind(Instance),
-  setService: Instance.setService.bind(Instance),
-  startService: Instance.startService.bind(Instance),
-  startAllService: Instance.startAllService.bind(Instance),
+  ...Instance.bindMap,
   middleware: (store) => {
     Instance.setStore(store)
     return (next) => action => Instance.onAction(action) || next(action) // pick this action from the reducer
