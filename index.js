@@ -70,11 +70,13 @@ class LiteCSP {
   }
 
   next (data) {
+    // console.log('>>>> NEXT', this.type, data)
     this.generatorNext(data)
     while (this.observer && this.running && !this.respond.done) { // process follow up res by calling next till a req
       this.observer(this.respond.value)
       !this.respond.done && this.generatorNext(data)
     }
+    // console.log('>>>> NEXT', this.type, data)
   }
 
   stop (data) {
@@ -87,25 +89,36 @@ class LiteCSP {
 
 /**
  * mental structure:
- *   ReduxMiddleware
- *     ReduxService
- *       Entry
- *       LiteCSP { start, input, next, stop }
- *         service(generator) { req, res }
+ *   Redux
+ *     ReduxService.middleware
+ *       Entry (Your Customized Function)
+ *       Service Wrapper (LiteCSP)
+ *         Service (Your Customized Generator) { req, res }
  */
+const BIND_KEY_LIST = [
+  'middleware',
+  'setEntry',
+  'setService',
+  'startService',
+  'startAllService',
+  'stopService'
+]
+
 class ReduxService {
   constructor () {
     this.store = null
     this.entryMap = {} // actionType - serviceEntryFunction
     this.serviceMap = {} // serviceType - LiteCSP
     this.serviceGeneratorFunctionMap = {}
-    this.bindMap = {
-      setEntry: this.setEntry.bind(this),
-      setService: this.setService.bind(this),
-      startService: this.startService.bind(this),
-      startAllService: this.startAllService.bind(this),
-      stopService: this.stopService.bind(this)
-    }
+
+    // bind method to this[key] & this.bindMap[key]
+    this.bindMap = {}
+    BIND_KEY_LIST.forEach((key) => ( this[key] = this.bindMap[key] = this[key].bind(this) ))
+  }
+
+  middleware (store) {
+    this.setStore(store)
+    return (next) => action => this.onAction(action) || next(action) // pick this action from the reducer
   }
 
   setStore (store) { this.store = store }
@@ -172,15 +185,9 @@ class ReduxService {
   }
 }
 
-const Instance = new ReduxService()
-
 const factory = () => ({
-  ...Instance.bindMap,
-  middleware: (store) => {
-    Instance.setStore(store)
-    return (next) => action => Instance.onAction(action) || next(action) // pick this action from the reducer
-  },
-  createSessionReducer: (actionType, session) => {
+  ReduxService, // for manually create new instance
+  createSessionReducer: (actionType, session) => { // the session Object Appears to be 'Immutable', but not necessarily the Array or Object inside
     const initialState = { ...session, _tick: 0 }
     return (state = initialState, action) => {
       if (action.type === actionType) return { ...state, ...action.payload, _tick: state._tick + 1 }
@@ -189,6 +196,7 @@ const factory = () => ({
   }
 })
 
+// export adapter
 if (typeof exports === 'object' && typeof module === 'object') module.exports = factory()
 else if (typeof define === 'function' && define.amd) define([], factory)
 else if (typeof exports === 'object') exports[ 'ReduxService' ] = factory()
