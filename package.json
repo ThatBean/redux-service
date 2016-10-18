@@ -1,7 +1,7 @@
 {
   "name": "redux-service",
-  "version": "0.0.3",
-  "description": "A Redux Middleware to help you create 'service' to interact with async mutable data source",
+  "version": "0.0.4",
+  "description": "[Redux Middleware] Use generator-based 'Service' to handle '(highly mutable || remote) data source && async logic'",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,7 +16,8 @@
     "service",
     "entry",
     "generator",
-    "mutable"
+    "mutable",
+    "async"
   ],
   "author": "ThatBean",
   "license": "MIT"

@@ -3,8 +3,11 @@ Redux Service
 
 [Middleware](http://redux.js.org/docs/advanced/Middleware.html) for Redux.
 
-This offers a experimental way to handle **highly mutable / remote data source** in Redux structure
+Offers a experimental way to handle **(highly mutable || remote) data source && async logic** in Redux
 
+It's best to put all data you need under the Redux state, and update in a immutable way.
+But there are times the data you get just won't fit (**remote**), or best updated **mutable**.
+And the logic & action for those data often need to be handled **async**.
 
 #### Defining Service
 **Service** refers to the combination of data / logic that can not fully put under a Redux standard for:
