@@ -34,3 +34,6 @@ node_modules
 
 # webstorm configuration
 .idea
+
+# compiled entry
+index.js
