@@ -113,7 +113,7 @@ class ReduxService {
 
     // bind method to this[key] & this.bindMap[key]
     this.bindMap = {}
-    BIND_KEY_LIST.forEach((key) => ( this[key] = this.bindMap[key] = this[key].bind(this) ))
+    BIND_KEY_LIST.forEach((key) => ( this[ key ] = this.bindMap[ key ] = this[ key ].bind(this) ))
   }
 
   middleware (store) {
@@ -185,19 +185,21 @@ class ReduxService {
   }
 }
 
-const factory = () => ({
-  ReduxService, // for manually create new instance
-  createSessionReducer: (actionType, session) => { // the session Object Appears to be 'Immutable', but not necessarily the Array or Object inside
-    const initialState = { ...session, _tick: 0 }
-    return (state = initialState, action) => {
-      if (action.type === actionType) return { ...state, ...action.payload, _tick: state._tick + 1 }
-      else return state
-    }
+// the session Object Appears to be 'Immutable', but not necessarily the Array or Object inside
+function createSessionReducer (actionType, session) {
+  const initialState = { ...session, _tick: 0 }
+  return (state = initialState, action) => {
+    if (action.type === actionType) return { ...state, ...action.payload, _tick: state._tick + 1 }
+    else return state
   }
-})
+}
 
-// export adapter
-if (typeof exports === 'object' && typeof module === 'object') module.exports = factory()
-else if (typeof define === 'function' && define.amd) define([], factory)
-else if (typeof exports === 'object') exports[ 'ReduxService' ] = factory()
-else this[ 'ReduxService' ] = factory()
+export {
+  ReduxService, // for manually create new instance
+  createSessionReducer
+}
+
+export default {
+  ReduxService, // for manually create new instance
+  createSessionReducer
+}
