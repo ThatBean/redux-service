@@ -25,15 +25,13 @@ class LiteCSP {
     this.respond = DEFAULT_RESPOND
 
     this.contextObject = {
-      req: (keyList) => {
-        // console.log('- REQ', this.type, keyList)
+      req: (keyList) => { // console.log('- REQ', this.type, keyList)
         this.expect = [].concat(keyList).reduce((o, v) => {
           o[ v ] = true
           return o
         }, {})
       },
-      res: (data) => {
-        // console.log('- RES', this.type, data.type)
+      res: (data) => { // console.log('- RES', this.type, data.type)
         this.respond = { done: false, value: data }
       }
     }
@@ -60,8 +58,8 @@ class LiteCSP {
   input (key, data) {
     let isBlock = false
     if (this.running && this.expect[ key ]) {
-      if (this.isEnteredInput) throw new Error(`[ReduxService][LiteCSP] unexpected re-entry of ${this.type}, key: ${key}`)
-      this.isEnteredInput = true
+      if (this.isEnteredInput) console.error(`[ReduxService][LiteCSP] unexpected re-entry of ${this.type}, key: ${key}`)
+      else this.isEnteredInput = true
       this.next(data)
       this.isEnteredInput = false
       isBlock = true
@@ -123,9 +121,9 @@ class ReduxService {
 
   setStore (store) { this.store = store }
 
-  setEntry (type, entry) {
-    if (this.entryMap[ type ]) console.warn('[ReduxService] possible unexpected entry overwrite:', type, entry)
-    this.entryMap[ type ] = entry
+  setEntry (type, entryFunction) {
+    if (this.entryMap[ type ]) console.warn('[ReduxService] possible unexpected entry overwrite:', type, entryFunction)
+    this.entryMap[ type ] = entryFunction
   }
 
   setService (type, serviceGeneratorFunction) {
@@ -142,8 +140,7 @@ class ReduxService {
       store: this.store,
       ...this.bindMap
     })
-    service.linkObserver((...args) => {
-      // console.log('observer', ...args)
+    service.linkObserver((...args) => { // console.log('linkObserver', ...args)
       return this.store.dispatch(...args)
     })
     service.start()
@@ -166,8 +163,7 @@ class ReduxService {
     if (!this.store) console.warn('[ReduxService] caught action before store configured:', action)
 
     const entry = this.entryMap[ action.type ]
-    if (entry) {
-      // console.log('[ReduxService] Entry:', action.type)
+    if (entry) { // console.log('[ReduxService] Entry:', action.type)
       const isBlock = entry(this.store, action)
       if (isBlock) return true // if the entry return true, follow up middleware & reducers will be blocked
     }
@@ -175,7 +171,7 @@ class ReduxService {
     for (const type in this.serviceMap) {
       const service = this.serviceMap[ type ]
       if (service.input(action.type, action)) {
-        // if (!service.running) console.log('[ReduxService] service stopped:', service.type)
+        // !service.running && console.log('[ReduxService] service stopped:', service.type)
         if (!service.running) delete this.serviceMap[ service.type ]
         return true // always block
       }
