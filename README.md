@@ -56,6 +56,35 @@ a expected logic pattern for serviceGenerator is:
  - all actionTypes used in 'req' are for data input
  - all actionTypes used in 'res' are for data output
 
+## API
+
+usage:
+```
+import { createStore, applyMiddleware } from 'redux'
+import { ReduxService, createSessionReducer } from 'redux-service'
+
+const reduxService = configureReduxService()
+
+reduxService.setEntry('entry:key', entryFunction)
+reduxService.setService('service-name', serviceGeneratorFunction)
+
+const store = createStore(
+  reducer,
+  applyMiddleware(reduxService.middleware)
+)
+
+reduxService.startAllService()
+```
+
+* ReduxService instance
+    - middleware(store) - as Middleware for Redux Store
+    - setEntry(type, entryFunction)
+    - setService(type, serviceGeneratorFunction)
+    - startService(type)
+    - startAllService()
+    - stopService(type)
+
+* createSessionReducer(actionType, session) - create a simple reducer to push your Session Object to Redux Store
 
 ## License
 
