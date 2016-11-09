@@ -1,6 +1,6 @@
 {
   "name": "redux-service",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "[Redux Middleware] Use generator-based 'Service' to handle '(highly mutable || remote) data source && async logic'",
   "main": "index.js",
   "scripts": {
