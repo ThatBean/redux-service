@@ -1,5 +1,7 @@
 # Redux-Service
 
+[![npm](https://img.shields.io/npm/v/redux-service.svg)](https://www.npmjs.com/package/redux-service)
+
 [Middleware](http://redux.js.org/docs/advanced/Middleware.html) for [Redux](http://redux.js.org/).
 
 Offers a experimental way to handle `(highly mutable || remote) data source && async logic` in Redux.
