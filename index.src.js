@@ -50,9 +50,18 @@ class LiteCSP {
 
   input (action) {
     if (!this.isActive || !this.requestMap[ action.type ]) return false
-    if (this.inputAction) console.warn(`[ReduxService] re-entry of [${this.name}], already with: ${this.inputAction.type}, new action: ${action.type}`)
+    if (this.inputAction) {
+      console.warn(`[ReduxService|${this.name}] generator already running with: ${this.inputAction.type}, new: ${action.type}`)
+      this.inputAction = null
+      return true // Skip and Block Action
+    }
     this.inputAction = action
-    this.next(action)
+    try {
+      this.next(action)
+    } catch (error) {
+      console.warn(`[ReduxService|${this.name}] error in generator with action: ${action.type}`)
+      throw error
+    }
     this.inputAction = null
     return true // Block Action
   }
@@ -79,7 +88,7 @@ class LiteCSP {
  *     ReduxService.middleware
  *       Entry (Your Customized Function)
  *       Service Wrapper (LiteCSP)
- *         Service (Your Customized Generator) { req, res }
+ *         Service (Your Customized Generator) { store, req, res }
  */
 const BIND_KEY_LIST = [
   'middleware',
