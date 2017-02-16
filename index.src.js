@@ -13,7 +13,10 @@
  */
 
 const DEFAULT_RESPOND = { done: true, value: null }
-const TO_BOOL_MAP = (sourceList) => [].concat(sourceList).reduce((o, v) => { o[ v ] = true; return o }, {})
+function TO_BOOL_MAP (sourceList, boolMap = {}) {
+  [].concat(sourceList).forEach((v) => { boolMap[ v ] = true }) // support array and single element
+  return boolMap
+}
 
 class LiteCSP {
   constructor (name) {
@@ -34,7 +37,7 @@ class LiteCSP {
     this.generator = generatorFunction({ ...this.contextObject, ...contextObject })
     this.generatorNext = (action) => {
       this.respond = DEFAULT_RESPOND
-      if (this.isActive) this.isActive = (this.generator.next(action).done === false)
+      if (this.isActive) this.isActive = !this.generator.next(action).done
     }
   }
 
@@ -52,15 +55,14 @@ class LiteCSP {
     if (!this.isActive || !this.requestMap[ action.type ]) return false
     if (this.inputAction) {
       console.warn(`[ReduxService|${this.name}] generator already running with: ${this.inputAction.type}, new: ${action.type}`)
-      this.inputAction = null
-      return true // Skip and Block Action
+      return true // Skip and Block this Action
     }
     this.inputAction = action
     try {
       this.next(action)
     } catch (error) {
       console.warn(`[ReduxService|${this.name}] error in generator with action: ${action.type}`)
-      throw error
+      console.warn(error)
     }
     this.inputAction = null
     return true // Block Action
@@ -106,7 +108,7 @@ class ReduxService {
     this.serviceMap = {} // serviceType - LiteCSP
     this.serviceGeneratorFunctionMap = {}
     this.bindMap = {} // bind method to this[key] & this.bindMap[key]
-    BIND_KEY_LIST.forEach((key) => ( this[ key ] = this.bindMap[ key ] = this[ key ].bind(this) ))
+    BIND_KEY_LIST.forEach((key) => { this[ key ] = this.bindMap[ key ] = this[ key ].bind(this) })
   }
 
   middleware (store) {
@@ -150,10 +152,10 @@ class ReduxService {
   }
 
   onAction (action) {
-    if (!this.store) return console.warn(`[ReduxService] get Action before Store is set, strange. Action Type: ${action.type}`)
+    if (!this.store) return console.warn(`[ReduxService] get Action before Store is set. Action Type: ${action.type}`)
 
     const entry = this.entryMap[ action.type ]
-    if (entry) { // console.log('[ReduxService] Entry:', action.type)
+    if (entry) {
       const isBlock = entry(this.store, action)
       if (isBlock) return true // if isBlock, follow up service || middleware || reducers will not receive this Action
     }
@@ -161,7 +163,6 @@ class ReduxService {
     for (const serviceName in this.serviceMap) {
       const service = this.serviceMap[ serviceName ]
       if (service.input(action)) {
-        // !service.isActive && console.log('[ReduxService] service stopped:', service.name)
         if (!service.isActive) delete this.serviceMap[ service.name ]
         return true // always Block Action here
       }
